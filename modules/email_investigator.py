@@ -2,8 +2,6 @@ import streamlit as st
 import dns.resolver
 import hashlib
 import requests
-import subprocess
-import sys
 import re
 from urllib.parse import quote
 
@@ -16,14 +14,14 @@ def render():
     # Two modes
     mode = st.radio(
         "Investigation mode:",
-        ["Investigate a known email", "Find emails by username (Mailcat)"],
+        ["Investigate a known email", "Find emails by username"],
         horizontal=True
     )
 
     if mode == "Investigate a known email":
         _render_email_investigation()
     else:
-        _render_mailcat_search()
+        _render_username_email_search()
 
 
 # âââââââââââââââââââââââââââââââââââââââââââââ
@@ -132,16 +130,15 @@ def _render_email_investigation():
 
 
 # âââââââââââââââââââââââââââââââââââââââââââââ
-# MODE 2: Find emails by username (Mailcat)
+# MODE 2: Find emails by username (simple)
 # âââââââââââââââââââââââââââââââââââââââââââââ
 
-def _render_mailcat_search():
-    """Find existing email addresses for a username using mailcat."""
+def _render_username_email_search():
+    """Find possible email addresses for a username by generating common patterns."""
     st.write(
-        "Powered by [Mailcat](https://github.com/sharsil/mailcat) â "
-        "checks 37+ email providers (170+ domains) to find which email "
-        "addresses exist for a given username. Uses SMTP, API, and "
-        "recovery page checks. **Does not notify the account holder.**"
+        "Generate likely email addresses for a username by combining it with "
+        "common email providers. You can then use **Investigate a known email** "
+        "mode to verify each one."
     )
 
     username = st.text_input(
@@ -149,14 +146,7 @@ def _render_mailcat_search():
         placeholder="e.g., johndoe"
     )
 
-    with st.expander("Options"):
-        col1, col2 = st.columns(2)
-        with col1:
-            use_tor = st.checkbox("Use Tor (recommended for anonymity)", value=False)
-        with col2:
-            proxy = st.text_input("HTTP Proxy (optional):", placeholder="http://1.2.3.4:8080")
-
-    if st.button("ð Search Email Providers", type="primary"):
+    if st.button("ð Generate Email Addresses", type="primary"):
         if not username:
             st.error("Please enter a username.")
             return
@@ -165,82 +155,49 @@ def _render_mailcat_search():
             st.error("Username must be 1-64 characters: letters, numbers, underscores, hyphens, periods.")
             return
 
-        with st.spinner(f"Checking email providers for **{username}**..."):
-            results, error = _run_mailcat(username, use_tor=use_tor, proxy=proxy)
+        # Common email providers
+        providers = [
+            "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
+            "protonmail.com", "icloud.com", "aol.com", "mail.com",
+            "zoho.com", "yandex.com", "gmx.com", "tutanota.com",
+            "fastmail.com", "pm.me", "live.com", "msn.com",
+        ]
 
-        if error:
-            st.error(f"Error: {error}")
-            return
+        st.success(f"Generated **{len(providers)}** possible email addresses for **{username}**")
 
-        if not results:
-            st.warning(f"No email accounts found for username **{username}**.")
-            return
+        emails = [f"{username}@{provider}" for provider in providers]
 
-        st.success(f"Found **{len(results)}** email address(es) for **{username}**")
+        for email_addr in emails:
+            provider = email_addr.split("@")[1]
+            st.markdown(f"- `{email_addr}`")
 
-        for email_addr in results:
-            provider = email_addr.split("@")[1] if "@" in email_addr else "Unknown"
-            st.markdown(f"- `{email_addr}` ({provider})")
+        # Quick verification: check which providers have valid MX records
+        st.subheader("MX Verification")
+        st.write("Checking which providers have valid mail servers...")
 
-        # Quick action: investigate any found email
-        st.subheader("Quick Actions")
-        st.write("Switch to **Investigate a known email** mode above and paste any of these addresses to dig deeper.")
+        valid_emails = []
+        for email_addr in emails:
+            domain = email_addr.split("@")[1]
+            mx = _check_mx_records(domain)
+            if mx:
+                valid_emails.append(email_addr)
 
+        if valid_emails:
+            st.success(f"**{len(valid_emails)}** addresses have valid mail servers")
+        else:
+            st.warning("Could not verify MX records for any provider")
 
-def _run_mailcat(username, use_tor=False, proxy=None):
-    """Run mailcat as a subprocess and parse output."""
-    cmd = [sys.executable, "-m", "mailcat", username]
-
-    if use_tor:
-        cmd.append("--tor")
-    if proxy:
-        cmd.extend(["--proxy", proxy])
-
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=120,
+        # Quick action
+        st.subheader("Next Steps")
+        st.write(
+            "Switch to **Investigate a known email** mode above and paste any of "
+            "these addresses to check for linked social accounts, Gravatar profiles, "
+            "and more."
         )
-    except subprocess.TimeoutExpired:
-        return None, "Mailcat timed out after 2 minutes."
-    except FileNotFoundError:
-        return None, "Mailcat is not installed. Run: pip install mailcat"
-
-    # Parse output â mailcat prints found emails to stdout
-    output = result.stdout.strip()
-    if not output:
-        # Check stderr for errors
-        if result.stderr:
-            # Filter out progress/info lines
-            err_lines = [l for l in result.stderr.strip().split("\n")
-                         if "error" in l.lower() or "exception" in l.lower()]
-            if err_lines:
-                return None, "\n".join(err_lines)
-        return [], None
-
-    # Extract email addresses from output
-    emails = []
-    email_pattern = re.compile(r'[\w.\-+]+@[\w.\-]+\.\w+')
-    for line in output.split("\n"):
-        line = line.strip()
-        found = email_pattern.findall(line)
-        emails.extend(found)
-
-    # Deduplicate while preserving order
-    seen = set()
-    unique_emails = []
-    for e in emails:
-        if e.lower() not in seen:
-            seen.add(e.lower())
-            unique_emails.append(e)
-
-    return unique_emails, None
 
 
 # âââââââââââââââââââââââââââââââââââââââââââââ
-# Helper functions (unchanged from original)
+# Helper functions
 # âââââââââââââââââââââââââââââââââââââââââââââ
 
 def _check_mx_records(domain: str) -> list:
