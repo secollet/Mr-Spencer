@@ -1,122 +1,98 @@
 import streamlit as st
-import asyncio
-import subprocess
+import requests
 import json
 import re
 import pandas as pd
 import time
 import os
-import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
-def _run_maigret(username, timeout=15, top_sites=500, use_all=False):
-    """Run maigret as a subprocess and parse JSON output."""
-    # Build a temp output path
-    out_dir = os.path.join(os.path.dirname(__file__), "..", ".maigret_output")
-    os.makedirs(out_dir, exist_ok=True)
-    out_file = os.path.join(out_dir, f"{username}_{int(time.time())}")
+# User-Agent to mimic a real browser
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/120.0.0.0 Safari/537.36"
+)
 
-    cmd = [
-        sys.executable, "-m", "maigret",
-        username,
-        "--timeout", str(timeout),
-        "--json", "ndjson",
-        "--no-progressbar",
-        "-o", out_file,
-    ]
 
-    if use_all:
-        cmd.append("--use-all-sites")
-    else:
-        cmd.extend(["--top-sites", str(top_sites)])
-
+def _load_sites():
+    """Load sites.json from the project root."""
+    sites_path = os.path.join(os.path.dirname(__file__), "..", "sites.json")
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=300,  # 5 min hard cap
-        )
-    except subprocess.TimeoutExpired:
-        return None, "Maigret timed out after 5 minutes."
-    except FileNotFoundError:
-        return None, (
-            "Maigret is not installed. Run: pip install maigret"
-        )
-
-    # Parse the ndjson output file
-    ndjson_path = out_file + ".ndjson"
-    if not os.path.exists(ndjson_path):
-        # Try the regular json path
-        json_path = out_file + ".json"
-        if os.path.exists(json_path):
-            try:
-                with open(json_path, "r") as f:
-                    data = json.load(f)
-                os.remove(json_path)
-                return data, None
-            except Exception as e:
-                return None, f"Error reading output: {e}"
-        return None, f"No output file found. Stderr: {result.stderr[:500] if result.stderr else 'none'}"
-
-    records = []
-    try:
-        with open(ndjson_path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    records.append(json.loads(line))
-        os.remove(ndjson_path)
+        with open(sites_path, "r") as f:
+            sites = json.load(f)
+        # Filter out sites with broken URL templates (e.g., double {})
+        valid = []
+        for site in sites:
+            url_template = site.get("url", "")
+            if "{}" in url_template and url_template.count("{}") == 1:
+                valid.append(site)
+        return valid
     except Exception as e:
-        return None, f"Error parsing output: {e}"
+        st.error(f"Failed to load sites.json: {e}")
+        return []
 
-    return records, None
 
-
-def _parse_maigret_results(records):
-    """Parse maigret output records into a clean list of dicts."""
-    results = []
-    if not records:
-        return results
-
-    # Handle both list-of-dicts (ndjson) and dict-of-dicts formats
-    if isinstance(records, dict):
-        items = records.values() if isinstance(list(records.values())[0], dict) else [records]
-    elif isinstance(records, list):
-        items = records
-    else:
-        return results
-
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-
-        status = item.get("status", "")
-        # Only include claimed/found accounts
-        if status and "Claimed" not in str(status) and "Found" not in str(status):
-            continue
-
-        site_name = item.get("siteName", item.get("site_name", item.get("name", "Unknown")))
-        url = item.get("url_user", item.get("url", ""))
-        tags = item.get("tags", [])
-        if isinstance(tags, list):
-            tags = ", ".join(tags)
-
-        results.append({
-            "site": site_name,
+def _check_site(site, username, timeout=10):
+    """Check if a username exists on a given site by HTTP status code."""
+    url = site["url"].replace("{}", username)
+    headers = {"User-Agent": USER_AGENT}
+    try:
+        resp = requests.get(url, headers=headers, timeout=timeout, allow_redirects=True)
+        # Consider 200 as found; some sites return 200 for everything,
+        # but this is the best we can do without per-site logic
+        if resp.status_code == 200:
+            return {
+                "site": site["name"],
+                "url": url,
+                "status": "Found",
+                "http_code": resp.status_code,
+            }
+        else:
+            return {
+                "site": site["name"],
+                "url": url,
+                "status": "Not Found",
+                "http_code": resp.status_code,
+            }
+    except requests.exceptions.Timeout:
+        return {
+            "site": site["name"],
             "url": url,
-            "status": "Found",
-            "tags": tags,
-        })
-
-    return results
+            "status": "Timeout",
+            "http_code": None,
+        }
+    except requests.exceptions.ConnectionError:
+        return {
+            "site": site["name"],
+            "url": url,
+            "status": "Connection Error",
+            "http_code": None,
+        }
+    except Exception:
+        return {
+            "site": site["name"],
+            "url": url,
+            "status": "Error",
+            "http_code": None,
+        }
 
 
 def render():
-    """Render the Username Hunter powered by Maigret."""
+    """Render the Username Hunter UI."""
     st.header("ð Username Hunter")
-    st.write("Search **3,000+ sites** for a username using [Maigret](https://github.com/soxoj/maigret) â "
-             "an advanced OSINT username search engine with profile data extraction.")
+    st.write(
+        "Search **{}+ sites** for a username by checking profile URLs directly."
+    )
+
+    sites = _load_sites()
+    if not sites:
+        st.error("No sites loaded. Ensure sites.json exists in the project root.")
+        return
+
+    # Update the header with actual count
+    st.write(f"Loaded **{len(sites)}** sites to check.")
 
     # Username input
     username = st.text_input("Enter username to search:", placeholder="e.g., john_doe")
@@ -124,85 +100,77 @@ def render():
     # Options
     col1, col2 = st.columns(2)
     with col1:
-        timeout = st.slider("Per-site timeout (seconds)", 5, 30, 15)
+        timeout = st.slider("Per-site timeout (seconds)", 3, 15, 8)
     with col2:
-        scope = st.radio("Search scope", ["Top 500 sites", "All 3,000+ sites"], horizontal=True)
+        max_workers = st.slider("Concurrent checks", 5, 30, 15)
 
-    use_all = scope == "All 3,000+ sites"
-    top_sites = 500
+    show_all = st.checkbox("Show all results (including Not Found)", value=False)
 
     if st.button("ð Hunt Username", type="primary"):
         if not username:
             st.error("Please enter a username.")
             return
 
-        # Validate username (basic)
+        # Validate username
         if not re.match(r'^[\w.\-]{1,100}$', username):
             st.error("Username must be 1-100 characters: letters, numbers, underscores, hyphens, periods.")
             return
 
-        with st.spinner(f"Searching {'all 3,000+' if use_all else 'top 500'} sites for **{username}**... This may take a few minutes."):
-            records, error = _run_maigret(username, timeout=timeout, top_sites=top_sites, use_all=use_all)
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        status_text.info(f"Checking {len(sites)} sites for **{username}**...")
 
-        if error:
-            st.error(f"Error: {error}")
-            return
+        results = []
+        completed = 0
 
-        results = _parse_maigret_results(records)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(_check_site, site, username, timeout): site
+                for site in sites
+            }
 
-        if not results:
-            st.warning(f"No accounts found for **{username}**.")
-            return
+            for future in as_completed(futures):
+                completed += 1
+                progress_bar.progress(completed / len(sites))
+                result = future.result()
+                if result:
+                    results.append(result)
 
-        # Display results
-        st.success(f"Found **{len(results)}** account(s) for **{username}**")
+        progress_bar.progress(1.0)
 
-        df = pd.DataFrame(results)
+        # Separate found vs not found
+        found = [r for r in results if r["status"] == "Found"]
+        not_found = [r for r in results if r["status"] != "Found"]
 
-        # Summary
-        st.subheader("Results")
+        status_text.success(f"Done! Found **{len(found)}** account(s) for **{username}** across {len(sites)} sites.")
 
-        # Make URLs clickable
-        display_df = df.copy()
-        display_df["url"] = display_df["url"].apply(
-            lambda x: f'<a href="{x}" target="_blank">{x}</a>' if x else ""
-        )
-        display_df.columns = ["Site", "URL", "Status", "Tags"]
+        if found:
+            st.subheader(f"â Found ({len(found)})")
+            df_found = pd.DataFrame(found)
+            # Make URLs clickable
+            display_df = df_found[["site", "url", "status"]].copy()
+            display_df["url"] = display_df["url"].apply(
+                lambda x: f'<a href="{x}" target="_blank">{x}</a>' if x else ""
+            )
+            display_df.columns = ["Site", "URL", "Status"]
+            st.markdown(
+                display_df.to_html(escape=False, index=False),
+                unsafe_allow_html=True,
+            )
 
-        st.markdown(
-            display_df.to_html(escape=False, index=False),
-            unsafe_allow_html=True
-        )
+            # Export
+            export_df = pd.DataFrame(found)
+            csv = export_df.to_csv(index=False)
+            st.download_button(
+                label="ð¥ Export Found to CSV",
+                data=csv,
+                file_name=f"username_hunt_{username}_{int(time.time())}.csv",
+                mime="text/csv",
+            )
 
-        # Export
-        csv = df.to_csv(index=False)
-        st.download_button(
-            label="ð¥ Export to CSV",
-            data=csv,
-            file_name=f"username_hunt_{username}_{int(time.time())}.csv",
-            mime="text/csv"
-        )
-
-        # Tag filter
-        if "tags" in df.columns:
-            all_tags = set()
-            for t in df["tags"]:
-                if t:
-                    for tag in str(t).split(", "):
-                        if tag.strip():
-                            all_tags.add(tag.strip())
-            if all_tags:
-                st.subheader("Filter by Tag")
-                selected_tag = st.selectbox("Filter results by site category:", ["All"] + sorted(all_tags))
-                if selected_tag != "All":
-                    filtered = df[df["tags"].str.contains(selected_tag, na=False)]
-                    st.write(f"**{len(filtered)}** result(s) tagged **{selected_tag}**:")
-                    filt_display = filtered.copy()
-                    filt_display["url"] = filt_display["url"].apply(
-                        lambda x: f'<a href="{x}" target="_blank">{x}</a>' if x else ""
-                    )
-                    filt_display.columns = ["Site", "URL", "Status", "Tags"]
-                    st.markdown(
-                        filt_display.to_html(escape=False, index=False),
-                        unsafe_allow_html=True
-                    )
+        if show_all and not_found:
+            st.subheader(f"â Not Found / Errors ({len(not_found)})")
+            df_nf = pd.DataFrame(not_found)
+            display_nf = df_nf[["site", "url", "status"]].copy()
+            display_nf.columns = ["Site", "URL", "Status"]
+            st.dataframe(display_nf, use_container_width=True, hide_index=True)
