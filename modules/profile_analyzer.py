@@ -9,14 +9,36 @@ USER_AGENT = (
     "Chrome/120.0.0.0 Safari/537.36"
 )
 
+# Platforms known to block server-side requests
+BLOCKED_PLATFORMS = [
+    "facebook.com", "instagram.com", "linkedin.com",
+    "tiktok.com", "twitter.com", "x.com"
+]
+
 
 def _fetch_page(url, cookies=None):
     """Fetch a URL and return its HTML text."""
     headers = {"User-Agent": USER_AGENT}
     try:
         resp = requests.get(url, headers=headers, timeout=15, cookies=cookies, allow_redirects=True)
-        resp.raise_for_status()
+
+        # Handle non-200 responses gracefully
+        if resp.status_code >= 400:
+            # Check if this is a platform that commonly blocks server requests
+            blocked = any(domain in url for domain in BLOCKED_PLATFORMS)
+            if blocked:
+                return None, (
+                    f"HTTP {resp.status_code}: This platform blocks automated requests. "
+                    f"Try using **Raw HTML** mode instead â open the profile in your browser, "
+                    f"right-click â View Page Source, copy the HTML, and paste it below."
+                )
+            return None, f"HTTP {resp.status_code}: Server returned an error for this URL."
+
         return resp.text, None
+    except requests.exceptions.Timeout:
+        return None, "Request timed out after 15 seconds. The site may be slow or blocking requests."
+    except requests.exceptions.ConnectionError:
+        return None, "Could not connect to this URL. Check that the URL is correct and accessible."
     except requests.exceptions.RequestException as e:
         return None, str(e)
 
@@ -90,6 +112,12 @@ def render():
         "[socid-extractor](https://github.com/soxoj/socid-extractor). "
         "Supports 100+ platforms including GitHub, Reddit, Medium, TikTok, Instagram, "
         "Facebook, VK, Flickr, Tumblr, and more."
+    )
+
+    st.info(
+        "ð¡ **Tip:** Some platforms (Facebook, Instagram, LinkedIn, etc.) block server-side "
+        "requests. For those, use **Raw HTML** mode: open the profile in your browser, "
+        "right-click â View Page Source, copy the HTML, and paste it here."
     )
 
     # Input mode
