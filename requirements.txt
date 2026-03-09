@@ -6,6 +6,4 @@ dnspython
 yt-dlp
 openpyxl
 pandas
-maigret
 socid-extractor
-mailcat
