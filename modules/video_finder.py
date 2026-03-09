@@ -342,5 +342,7 @@ def run_video_finder():
             st.exception(e)
 
 
+render = run_video_finder
+
 if __name__ == "__main__":
     run_video_finder()
