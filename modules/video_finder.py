@@ -572,7 +572,15 @@ def run_video_finder():
                                  'Tagged Handles Found']]
 
                 st.subheader("Search Results")
-                st.dataframe(display_df, use_container_width=True, hide_index=True)
+                st.dataframe(
+                    display_df,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "Link": st.column_config.LinkColumn("Link", display_text="Open Video"),
+                        "Channel URL": st.column_config.LinkColumn("Channel URL"),
+                    }
+                )
 
                 # Export button
                 excel_bytes = export_to_excel(display_df)
