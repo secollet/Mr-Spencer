@@ -6,7 +6,7 @@ import re
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus, urlparse, unquote
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -148,7 +148,7 @@ def search_google_for_videos(query, site_domain, session):
 
             if site_domain in href:
                 if '/url?q=' in href:
-                    clean_url = href.split('/url?q=')[1].split('&')[0]
+                    clean_url = unquote(href.split('/url?q=')[1].split('&')[0])
                 else:
                     clean_url = href
 
@@ -323,7 +323,7 @@ def search_social_tagged_content(target_name, handles, progress_bar, progress_of
 
                 if site_domain in href:
                     if '/url?q=' in href:
-                        clean_url = href.split('/url?q=')[1].split('&')[0]
+                        clean_url = unquote(href.split('/url?q=')[1].split('&')[0])
                     else:
                         clean_url = href
 
