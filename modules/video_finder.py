@@ -60,71 +60,335 @@ def check_yt_dlp_installed():
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
-YÙX\ÚÞ[Ý]XJ\Ù]Û[YK[X\Ù\Ë[\Ë^ÛYYÝ\ËÙÜ\Ü×ÜXÙZÛ\NÙX\Ú[ÝUXH\Ú[È]Y\Ý[ÈH×BÙX\ÚÜ]Y\Y\ÈHÝ\Ù]Û[YWH
-È[X\Ù\È
-È[\ÂÙX\ÚÜ]Y\Y\ÈHÜKÝ\
 
-HÜH[ÙX\ÚÜ]Y\Y\ÈYKÝ\
 
-WBÝ[Ü]Y\Y\ÈH[ÙX\ÚÜ]Y\Y\ÊBÜY]Y\H[[[Y\]JÙX\ÚÜ]Y\Y\ÊNÙÜ\Ü×ÜXÙZÛ\ÙÜ\ÜÊ
-YÈÝ[Ü]Y\Y\ÊH
-LÈ
-BÝÜ]JÙX\Ú[È[ÝUXHÜÜ]Y\_HBNÛYHÂ	Þ]Y	ËÞ]ÙX\ÚLÜ]Y\_IË	ËKY[\ZÛÛË	ËKY]\^[\Ý	Ë	ËK[ËYÝÛØY	Ë	ËK\ÛØÚÙ]][Y[Ý]	Ë	ÌL	ÂB\Ý[HÝXØÙ\ÜË[ÛYØ\\WÛÝ]]UYK^UYK[Y[Ý]LÌ
-BY\Ý[]\ÛÙHOHÛÛ[YBÜ[H[\Ý[ÝÝ]Ý\
+def enrich_metadata_with_yt_dlp(video_url):
+    """Enrich video metadata using yt-dlp."""
+    try:
+        cmd = [
+            'yt-dlp',
+            '--dump-json',
+            '--no-download',
+            '--socket-timeout', '10',
+            video_url
+        ]
 
-KÜ]
-	×ÊNYÝ[KÝ\
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
 
-NÛÛ[YBN[HHÛÛØYÊ[JBÈ^XÝY[È[ÜX][ÛY[×Ý\H[KÙ]
-	ÝÙXYÙWÝ\	ÊHÜ[KÙ]
-	Ý\	ÊBYÝY[×Ý\ÛÛ[YBÈÚXÚÈYÚ[[TÚÝ[H^ÛYYÚ[[Ý\H[KÙ]
-	ØÚ[[Ý\	Ë	ÉÊBYÚ[[Ý\[[J^ÛYY[Ú[[Ý\Ü^ÛYY[^ÛYYÝ\ÊNÛÛ[YB\Ý[Ë\[
-Â	Ó[ÉÎY[×Ý\	ÔÛÝ\ÙH]ÜIÎ	Ö[ÝUXIË	Ñ]HX\ÚY	Î[KÙ]
-	Ý\ØYÙ]IË	Õ[ÛÝÛÊK	ÕY[È]IÎ[KÙ]
-	Ý]IË	Õ[ÛÝÛÊK	Ñ\ØÜ\[ÛÎ[KÙ]
-	Ù\ØÜ\[ÛË	ÉÊK	Õ\ØY\ÐÚ[[[YIÎ[KÙ]
-	ØÚ[[	Ë	Õ[ÛÝÛÊK	ÐÚ[[T	ÎÚ[[Ý\	ÕYÙÙY[\ÈÝ[	Î]Y\HY]Y\H[[\È[ÙH	ÉÂJB^Ù\ÛÛÓÓXÛÙQ\ÜÛÛ[YB[YKÛY\
-JB^Ù\ÝXØÙ\ÜË[Y[Ý]^\YÝØ\[Ê[ÝUXHÙX\Ú[YYÝ]Ü]Y\NÜ]Y\_HB^Ù\^Ù\[Û\ÈNÝØ\[Ê\ÜÙX\Ú[È[ÝUXHÜ	ÞÜ]Y\_IÎÜÝJ_HB]\\Ý[ÂYÙX\ÚÙÛÛÙÛWÝY[ÜÊ\Ù]Û[YK[X\Ù\Ë[\Ë]Ü\ËÙÜ\Ü×ÜXÙZÛ\Ý\[ÜÙÜ\ÜÊNÙX\ÚÛÛÙÛHÜY[ÜÈÛÜXÚYYY]Ü\Ë\Ý[ÈH×BÙ\ÜÚ[ÛH\]Y\ÝËÙ\ÜÚ[Û
-BÙ\ÜÚ[ÛXY\Ë\]JÂ	Õ\Ù\PYÙ[	Î	Ó[Þ[KÍK
-Ú[ÝÜÈLÈÚ[È
-
-H\UÙXÚ]ÍLÍËÍÂJBÈZ[ÙX\Ú]Y\Y\ÈÜXXÚ]ÜBÙX\ÚÝ\ÚÜÈH×BÜ]ÜH[]Ü\ÎY]ÜH[ÉÖ[ÝUXIË	Õ[Y[ÉË	Ô[XIË	ÑZ[[[Ý[ÛË	Ð\Ú]KÜÉ×NÚ]WÙÛXZ[HÂ	Ö[ÝUXIÎ	Þ[Ý]XKÛÛIË	Õ[Y[ÉÎ	Ý[Y[ËÛÛIË	Ô[XIÎ	Ü[XKÛÛIË	ÑZ[[[Ý[ÛÎ	ÙZ[[[Ý[ÛÛÛIË	Ð\Ú]KÜÉÎ	Ø\Ú]KÜÉÂKÙ]
-]ÜK	ÉÊBYÝÚ]WÙÛXZ[ÛÛ[YBÈÜ[Y[ËÙX\ÚH[YH[[\ÂÙX\ÚÜ]Y\Y\ÈHÝ\Ù]Û[YWH
-È[X\Ù\ÂY]ÜHOH	Õ[Y[ÉÎÙX\ÚÜ]Y\Y\Ë^[
-[\ÊBÜ]Y\H[ÙX\ÚÜ]Y\Y\ÎY]Y\KÝ\
+        if result.returncode == 0:
+            try:
+                data = json.loads(result.stdout)
+                return {
+                    'upload_date': data.get('upload_date', ''),
+                    'description': data.get('description', ''),
+                    'uploader': data.get('uploader', ''),
+                    'channel_url': data.get('channel_url', ''),
+                }
+            except json.JSONDecodeError:
+                return {}
 
-NÙX\ÚÝ\ÚÜË\[
+        return {}
 
-]ÜKÚ]WÙÛXZ[]Y\KÝ\
+    except Exception:
+        return {}
 
-K	Û[YIÊJBÈ[ÛÈÙX\ÚÚ][\ÂÜ[H[[\ÎY[KÝ\
 
-NÙX\ÚÝ\ÚÜË\[
+def build_search_queries(target_name, aliases, handles, selected_platforms):
+    """Build Google search queries for each platform and name variant."""
+    platforms = {
+        'YouTube': {'site_domain': 'youtube.com'},
+        'Vimeo': {'site_domain': 'vimeo.com'},
+        'Rumble': {'site_domain': 'rumble.com'},
+        'Dailymotion': {'site_domain': 'dailymotion.com'},
+        'Archive.org': {'site_domain': 'archive.org'},
+        'Twitter/X': {'site_domain': 'twitter.com'},
+        'Instagram': {'site_domain': 'instagram.com'},
+        'TikTok': {'site_domain': 'tiktok.com'},
+        'Facebook': {'site_domain': 'facebook.com'},
+    }
 
-]ÜKÚ]WÙÛXZ[[KÝ\
+    search_tasks = []
 
-K	Ú[IÊJBÝ[Ý\ÚÜÈH[ÙX\ÚÝ\ÚÜÊBÜ\Ú×ÚY
-]ÜKÚ]WÙÛXZ[]Y\K]Y\WÝ\JH[[[Y\]JÙX\ÚÝ\ÚÜÊNÙÜ\Ü×Ü\Ù[HÝ\[ÜÙÜ\ÜÈ
-È
-\Ú×ÚYÈÝ[Ý\ÚÜÊH
-
-LÈ
-ÙÜ\Ü×ÜXÙZÛ\ÙÜ\ÜÊZ[ÙÜ\Ü×Ü\Ù[ÈLMJJBNÈZ[ÙX\Ú]Y\BY]Y\WÝ\HOH	Ú[IÈ[]Y\KÝ\ÝÚ]
-	Ð	ÊNÛÛÙÛWÜ]Y\HHÈÜ]Y\_HÚ]NÜÚ]WÙÛXZ[HY[ÉÂ[Y]Y\WÝ\HOH	Ú[IÎÛÛÙÛWÜ]Y\HHÈÜ]Y\_HÚ]NÜÚ]WÙÛXZ[HY[ÉÂ[ÙNÛÛÙÛWÜ]Y\HHÈÜ]Y\_HÚ]NÜÚ]WÙÛXZ[HY[ÉÂÙX\ÚÝ\HÚÎËÝÝÝËÛÛÙÛKÛÛKÜÙX\ÚÜO^Ü][ÝWÜ\ÊÛÛÙÛWÜ]Y\J_IÂ\ÜÛÙHHÙ\ÜÚ[ÛÙ]
-ÙX\ÚÝ\[Y[Ý]LL
-B\ÜÛÙKZ\ÙWÙÜÜÝ]\Ê
-BÛÝ\HX]]Y[ÛÝ\
-\ÜÛÙKÛÛ[	Ú[\Ù\ÊBÈ^XÝY[ÈTÈÛHÙX\Ú\Ý[ÂÜ[È[ÛÝ\[Ø[
-	ØIËYUYJNYH[ÖÉÚY×BÈ[\ÜY[È[ÜÂYÚ]WÙÛXZ[[Y[
-	ÝØ]Ú	È[YÜ	ÝY[ÉÈ[YÜ	ÝIÈ[YNÈ^XÝÛX[TY	ËÝ\ÜOIÈ[YÛX[Ý\HYÜ]
-	ËÝ\ÜOIÊVÌWKÜ]
-	ÉÊVÌB[ÙNÛX[Ý\HYÈÚÚ\ÛÛÙÛHY\XÝÂY	ÙÛÛÙÛKÛÛIÈ[ÛX[Ý\ÛÛ[YB]HH[ËÙ]Ý^
+    # Build search tasks
+    for platform_name, site_domain in platforms.items():
+        if platform_name not in selected_platforms:
+            continue
 
-HÜ	Õ[ÛÝÛÂ\Ý[Ë\[
-Â	Ó[ÉÎÛX[Ý\	ÔÛÝ\ÙH]ÜIÎ]ÜK	Ñ]HX\ÚY	Î	Õ[ÛÝÛË	ÕY[È]IÎ]K	Ñ\ØÜ\[ÛÎ	ÉË	Õ\ØY\ÐÚ[[[YIÎ	ÉË	ÐÚ[[T	Î	ÉË	ÕYÙÙY[\ÈÝ[	Î]Y\HY]Y\WÝ\HOH	Ú[IÈ[ÙH	ÉÂJB[YKÛY\
-HÈ]H[Z][Â^Ù\\]Y\ÝË\]Y\Ý^Ù\[Û\ÈNÝØ\[Ê\ÜÙX\Ú[ÈÜ]Ü_HÜ	ÞÜ]Y\_IÎÜÝJ_HB^Ù\^Ù\[Û\ÈNÝØ\[Ê[^XÝY\ÜÙX\Ú[ÈÜ]Ü_NÜÝJ_HB]\\Ý[À(()ÍÉ¡}Í½¥±}Ñ}½¹Ñ¹Ð¡ÑÉÑ}¹µ°¡¹±Ì°ÁÉ½ÉÍÍ}Á±¡½±È°ÕÉÉ¹Ñ}ÁÉ½ÉÍÌ¤è(MÉ ½ÈÑ½¹Ñ¹Ð½¸Í½¥°µ¥Á±Ñ½ÉµÌ¸(ÉÍÕ±ÑÌômt(ÍÍÍ¥½¸ôÉÅÕÍÑÌ¹MÍÍ¥½¸ ¤(ÍÍÍ¥½¸¹¡ÉÌ¹ÕÁÑ¡ì(UÍÈµ¹Ðè5½é¥±±¼Ô¸À¡]¥¹½ÝÌ9PÄÀ¸Àì]¥¸ØÐìàØÐ¤ÁÁ±]-¥Ð¼ÔÌÜ¸ÌØ(ô¤((Á±Ñ½ÉµÌôì(QÝ¥ÑÑÈ½`èÑÝ¥ÑÑÈ¹½´°(%¹ÍÑÉ´è¥¹ÍÑÉ´¹½´°(Q¥­Q½¬èÑ¥­Ñ½¬¹½´°(½½¬è½½¬¹½´(ô((ÍÉ¡}ÑÍ­Ìômt((	Õ¥±ÍÉ ÑÍ­Ì(½ÈÁ±Ñ½Éµ}¹µ°Í¥Ñ}½µ¥¸¥¸Á±Ñ½ÉµÌ¹¥ÑµÌ ¤è(MÉ ä¹µ(ÍÉ¡}ÑÍ­Ì¹ÁÁ¹ ¡Á±Ñ½Éµ}¹µ°Í¥Ñ}½µ¥¸°ÑÉÑ}¹µ°¹µ¤¤((MÉ ä ¡¹±(½È¡¹±¥¸¡¹±Ìè(¥¡¹±¹ÍÑÉ¥À ¤è(ÍÉ¡}ÑÍ­Ì¹ÁÁ¹ ¡Á±Ñ½Éµ}¹µ°Í¥Ñ}½µ¥¸°¡¹±¹ÍÑÉ¥À ¤°¡¹±¤¤((Ñ½Ñ±}ÑÍ­Ìô±¸¡ÍÉ¡}ÑÍ­Ì¤((½ÈÑÍ­}¥à°¡Á±Ñ½É´°Í¥Ñ}½µ¥¸°ÅÕÉä°ÅÕÉå}ÑåÁ¤¥¸¹ÕµÉÑ¡ÍÉ¡}ÑÍ­Ì¤è(ÁÉ½ÉÍÍ}ÁÉ¹ÐôÕÉÉ¹Ñ}ÁÉ½ÉÍÌ¬¡ÑÍ­}¥à¼Ñ½Ñ±}ÑÍ­Ì¤¨ÈÔ¼Ð(ÁÉ½ÉÍÍ}Á±¡½±È¹ÁÉ½ÉÍÌ¡µ¥¸¡ÁÉ½ÉÍÍ}ÁÉ¹Ð¼ÄÀÀ°À¸äÔ¤¤((ÑÉäè(	Õ¥±ÍÉ ÅÕÉä(¥ÅÕÉå}ÑåÁôô¡¹±¹ÅÕÉä¹ÍÑÉÑÍÝ¥Ñ   ¤è(½½±}ÅÕÉäôíÅÕÉåôÍ¥ÑéíÍ¥Ñ}½µ¥¹ôÙ¥¼(±¥ÅÕÉå}ÑåÁôô¡¹±è(½½±}ÅÕÉäôíÅÕÉåôÍ¥ÑéíÍ¥Ñ}½µ¥¹ôÙ¥¼(±Íè(½½±}ÅÕÉäôíÅÕÉåôÍ¥ÑéíÍ¥Ñ}½µ¥¹ôÙ¥¼((ÍÉ¡}ÕÉ°ô¡ÑÑÁÌè¼½ÝÝÜ¹½½±¹½´½ÍÉ ýÄõíÅÕ½Ñ}Á±ÕÌ¡½½±}ÅÕÉä¥ô((ÉÍÁ½¹ÍôÍÍÍ¥½¸¹Ð¡ÍÉ¡}ÕÉ°°Ñ¥µ½ÕÐôÄÀ¤(ÉÍÁ½¹Í¹É¥Í}½É}ÍÑÑÕÌ ¤((Í½ÕÀô	ÕÑ¥Õ±M½ÕÀ¡ÉÍÁ½¹Í¹½¹Ñ¹Ð°¡Ñµ°¹ÁÉÍÈ¤((áÑÉÐÙ¥¼UI1Ì(½È±¥¹¬¥¸Í½ÕÀ¹¥¹}±° °¡ÉõQÉÕ¤è(¡Éô±¥¹­l¡Ét((¥Í¥Ñ}½µ¥¸¥¸¡Éè(¥½ÕÉ°ýÄô¥¸¡Éè(±¹}ÕÉ°ô¡É¹ÍÁ±¥Ð ½ÕÉ°ýÄô¥lÅt¹ÍÁ±¥Ð ¥lÁt(±Íè(±¹}ÕÉ°ô¡É((¥½½±¹½´¥¸±¹}ÕÉ°è(½¹Ñ¥¹Õ((Ñ¥Ñ±ô±¥¹¬¹Ñ}ÑáÐ ¤½ÈU¹­¹½Ý¸((ÉÍÕ±ÑÌ¹ÁÁ¹¡ì(1¥¹¬è±¹}ÕÉ°°(M½ÕÉA±Ñ½É´èÁ±Ñ½É´°(ÑAÕ±¥Í¡èU¹­¹½Ý¸°(Y¥¼Q¥Ñ±èÑ¥Ñ±°(ÍÉ¥ÁÑ¥½¸è°(UÁ±½È½
-¡¹¹°9µè°(
-¡¹¹°UI0è°(Q!¹±Ì½Õ¹èÅÕÉä¥ÅÕÉå}ÑåÁôô¡¹±±Í(ô¤((Ñ¥µ¹Í±À È¤IÑ±¥µ¥Ñ¥¹((áÁÐÉÅÕÍÑÌ¹IÅÕÍÑáÁÑ¥½¸Ìè(ÍÐ¹ÝÉ¹¥¹¡ÉÉ½ÈÍÉ¡¥¹íÁ±Ñ½Éµô½ÈíÅÕÉåôèíÍÑÈ¡¥ô¤(áÁÐáÁÑ¥½¸Ìè(ÍÐ¹ÝÉ¹¥¹¡U¹áÁÑÉÉ½ÈÍÉ¡¥¹íÁ±Ñ½ÉµôèíÍÑÈ¡¥ô¤((ÉÑÕÉ¸ÉÍÕ±ÑÌ(()¹É¥¡}µÑÑ}Ý¥Ñ¡}åÑ±À¡Ù¥½}ÕÉ°¤è(¹É¥ Ù¥¼µÑÑÕÍ¥¹åÐµ±À¸(ÑÉäè(µôl(åÐµ±À°(´µÕµÀµ©Í½¸°(´µ¹¼µ½Ý¹±½°(´µÍ½­ÐµÑ¥µ½ÕÐ°ÄÀ°(Ù¥½}ÕÉ°(t((ÉÍÕ±ÐôÍÕÁÉ½ÍÌ¹ÉÕ¸¡µ°ÁÑÕÉ}½ÕÑÁÕÐõQÉÕ°ÑáÐõQÉÕ°Ñ¥µ½ÕÐôÄÔ¤((¥ÉÍÕ±Ð¹ÉÑÕÉ¹½ôôÀè(ÑÉäè(Ñô©Í½¸¹±½Ì¡ÉÍÕ±Ð¹ÍÑ½ÕÐ¤(ÉÑÕÉ¸ì(ÕÁ±½}ÑèÑ¹Ð ÕÁ±½}Ñ°¤°(ÍÉ¥ÁÑ¥½¸èÑ¹Ð ÍÉ¥ÁÑ¥½¸°¤°(ÕÁ±½ÈèÑ¹Ð ÕÁ±½È°¤(ô(áÁÐ©Í½¸¹)M=9½ÉÉ½Èè(ÉÑÕÉ¸íô((ÉÑÕÉ¸íô((áÁÐáÁÑ¥½¸è(ÉÑÕÉ¸íô(()ÕÁ±¥Ñ}ÉÍÕ±ÑÌ¡ÉÍÕ±ÑÌ¤è(Iµ½ÙÕÁ±¥ÑUI1ÌÉ½´ÉÍÕ±ÑÌ¸(Í¹}ÕÉ±ÌôÍÐ ¤(ÕÁ±¥Ñômt((½ÈÉÍÕ±Ð¥¸ÉÍÕ±ÑÌè(ÕÉ°ôÉÍÕ±Ð¹Ð 1¥¹¬°¤(¥ÕÉ°¹½Ð¥¸Í¹}ÕÉ±Ìè(Í¹}ÕÉ±Ì¹¡ÕÉ°¤(ÕÁ±¥Ñ¹ÁÁ¹¡ÉÍÕ±Ð¤((ÉÑÕÉ¸ÕÁ±¥Ñ(()ÁÁ±å}á±Õ}¥±ÑÈ¡ÉÍÕ±ÑÌ°á±Õ}ÕÉ±Ì¤è(¥±ÑÈ½ÕÐÉÍÕ±ÑÌµÑ¡¥¹á±Õ½Õ¹ÐUI1Ì¸(¥±ÑÉômt((½ÈÉÍÕ±Ð¥¸ÉÍÕ±ÑÌè(±¥¹¬ôÉÍÕ±Ð¹Ð 1¥¹¬°¤(Í¡½Õ±}á±Õô±Í((½Èá±Õ¥¸á±Õ}ÕÉ±Ìè(¥á±Õ¹ÍÑÉ¥À ¤¹á±Õ¹ÍÑÉ¥À ¤¥¸±¥¹¬è(Í¡½Õ±}á±ÕôQÉÕ(É¬((¥¹½ÐÍ¡½Õ±}á±Õè(¥±ÑÉ¹ÁÁ¹¡ÉÍÕ±Ð¤((ÉÑÕÉ¸¥±ÑÉ*
+        # Search by name
+        search_tasks.append((platform_name, site_domain['site_domain'], target_name, target_name))
+
+        # Search by each alias
+        for alias in aliases:
+            if alias.strip():
+                search_tasks.append((platform_name, site_domain['site_domain'], alias.strip(), alias))
+
+        # Search by each handle
+        for handle in handles:
+            if handle.strip():
+                search_tasks.append((platform_name, site_domain['site_domain'], handle.strip(), handle))
+
+    return search_tasks
+
+
+def search_google_for_videos(query, site_domain, session):
+    """Search Google for video URLs on a specific platform domain."""
+    google_query = f"{query} site:{site_domain} video"
+    search_url = f"https://www.google.com/search?q={quote_plus(google_query)}"
+
+    try:
+        response = session.get(search_url, timeout=10)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Extract video URLs
+        results = []
+        for link in soup.find_all('a', href=True):
+            href = link['href']
+
+            if site_domain in href:
+                if '/url?q=' in href:
+                    clean_url = href.split('/url?q=')[1].split('&')[0]
+                else:
+                    clean_url = href
+
+                if 'google.com' in clean_url:
+                    continue
+
+                title = link.get_text() or 'Unknown'
+
+                results.append({
+                    'Link': clean_url,
+                    'Source Platform': '',
+                    'Date Published': 'Unknown',
+                    'Video Title': title,
+                    'Description': '',
+                    'Uploader/Channel Name': '',
+                    'Channel URL': '',
+                    'Tagged Handles Found': query if query.startswith('@') else ''
+                })
+
+        time.sleep(2)  # Rate limiting
+        return results
+
+    except requests.RequestException as e:
+        st.warning(f"Error searching {site_domain} for {query}: {str(e)}")
+        return []
+    except Exception as e:
+        st.warning(f"Unexpected error searching {site_domain}: {str(e)}")
+        return []
+
+
+def search_youtube(target_name, aliases, handles, excluded_accounts, progress_bar):
+    """Search for content on YouTube via Google scraping."""
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                       '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    })
+
+    results = []
+
+    # Build search queries for YouTube
+    search_names = [target_name] + [a for a in aliases if a.strip()]
+    search_names += [h for h in handles if h.strip()]
+
+    total_queries = len(search_names)
+
+    for idx, name in enumerate(search_names):
+        progress_percent = int((idx / max(total_queries, 1)) * 20)
+        progress_bar.progress(min(progress_percent, 20))
+
+        query_results = search_google_for_videos(name, 'youtube.com', session)
+        for r in query_results:
+            r['Source Platform'] = 'YouTube'
+            r['Tagged Handles Found'] = name if name.startswith('@') else ''
+        results.extend(query_results)
+
+        time.sleep(1)
+
+    # Enrich with yt-dlp metadata
+    for result in results:
+        metadata = enrich_metadata_with_yt_dlp(result['Link'])
+        if metadata:
+            if metadata.get('upload_date'):
+                date_str = metadata['upload_date']
+                try:
+                    result['Date Published'] = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+                except (IndexError, ValueError):
+                    pass
+            if metadata.get('description'):
+                result['Description'] = metadata['description'][:200]
+            if metadata.get('uploader'):
+                result['Uploader/Channel Name'] = metadata['uploader']
+            if metadata.get('channel_url'):
+                result['Channel URL'] = metadata['channel_url']
+
+    return results
+
+
+def search_google_videos(target_name, aliases, handles, selected_platforms, progress_bar, progress_offset):
+    """Search Google for videos on selected platforms (non-YouTube)."""
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                       '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    })
+
+    # Build tasks for non-YouTube platforms
+    search_tasks = build_search_queries(target_name, aliases, handles, selected_platforms)
+    search_tasks = [(p, s, q, n) for p, s, q, n in search_tasks if p != 'YouTube']
+
+    total_tasks = len(search_tasks)
+    results = []
+
+    for task_idx, (platform, site_domain, query, query_type) in enumerate(search_tasks):
+        progress_percent = progress_offset + int((task_idx / max(total_tasks, 1)) * 25)
+        progress_bar.progress(min(progress_percent, 50))
+
+        query_results = search_google_for_videos(query, site_domain, session)
+
+        for r in query_results:
+            r['Source Platform'] = platform
+
+        results.extend(query_results)
+
+        time.sleep(1)
+
+    # Try to enrich with yt-dlp where supported
+    for result in results:
+        metadata = enrich_metadata_with_yt_dlp(result['Link'])
+        if metadata:
+            if metadata.get('upload_date'):
+                date_str = metadata['upload_date']
+                try:
+                    result['Date Published'] = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+                except (IndexError, ValueError):
+                    pass
+            if metadata.get('description'):
+                result['Description'] = metadata['description'][:200]
+            if metadata.get('uploader'):
+                result['Uploader/Channel Name'] = metadata['uploader']
+            if metadata.get('channel_url'):
+                result['Channel URL'] = metadata['channel_url']
+
+    return results
+
+
+def search_social_tagged_content(target_name, handles, progress_bar, progress_offset):
+    """Search for social media tagged content featuring the target."""
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                       '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    })
+
+    platforms = {
+        'Twitter/X': 'twitter.com',
+        'Instagram': 'instagram.com',
+        'TikTok': 'tiktok.com',
+        'Facebook': 'facebook.com',
+    }
+
+    search_tasks = []
+
+    for platform_name, site_domain in platforms.items():
+        # Search by handle
+        for handle in handles:
+            if handle.strip():
+                search_tasks.append((platform_name, site_domain, handle.strip(), handle))
+
+        # Search by name
+        search_tasks.append((platform_name, site_domain, target_name, target_name))
+
+    total_tasks = len(search_tasks)
+    results = []
+
+    for task_idx, (platform, site_domain, query, query_type) in enumerate(search_tasks):
+        progress_percent = progress_offset + int((task_idx / max(total_tasks, 1)) * 30)
+        progress_bar.progress(min(progress_percent, 85))
+
+        try:
+            # Build Google query
+            google_query = f"{query} site:{site_domain} video"
+            search_url = f"https://www.google.com/search?q={quote_plus(google_query)}"
+
+            response = session.get(search_url, timeout=10)
+            response.raise_for_status()
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            for link in soup.find_all('a', href=True):
+                href = link['href']
+
+                if site_domain in href:
+                    if '/url?q=' in href:
+                        clean_url = href.split('/url?q=')[1].split('&')[0]
+                    else:
+                        clean_url = href
+
+                    if 'google.com' in clean_url:
+                        continue
+
+                    title = link.get_text() or 'Unknown'
+
+                    results.append({
+                        'Link': clean_url,
+                        'Source Platform': platform,
+                        'Date Published': 'Unknown',
+                        'Video Title': title,
+                        'Description': '',
+                        'Uploader/Channel Name': '',
+                        'Channel URL': '',
+                        'Tagged Handles Found': query if query.startswith('@') else ''
+                    })
+
+            time.sleep(2)  # Rate limiting
+
+        except requests.RequestException as e:
+            st.warning(f"Error searching {platform} for {query}: {str(e)}")
+        except Exception as e:
+            st.warning(f"Unexpected error searching {platform}: {str(e)}")
+
+    return results
+
+
+def deduplicate_results(results):
+    """Remove duplicate URLs from results."""
+    seen_urls = set()
+    unique = []
+
+    for result in results:
+        url = result.get('Link', '')
+        if url not in seen_urls:
+            seen_urls.add(url)
+            unique.append(result)
+
+    return unique
+
+
+def apply_exclude_filter(results, exclude_urls):
+    """Filter out results matching excluded account URLs."""
+    if not exclude_urls:
+        return results
+
+    filtered = []
+
+    for result in results:
+        link = result.get('Link', '')
+        should_exclude = False
+
+        for exclude in exclude_urls:
+            if exclude.strip() and exclude.strip() in link:
+                should_exclude = True
+                break
+
+        if not should_exclude:
+            filtered.append(result)
+
+    return filtered
+
+
 def export_to_excel(df):
     """Export dataframe to Excel bytes."""
     output = BytesIO()
@@ -226,7 +490,7 @@ def run_video_finder():
     st.divider()
 
     # Search button
-    search_button = st.button("ð Search Videos", type="primary", use_container_width=True)
+    search_button = st.button("\U0001f50d Search Videos", type="primary", use_container_width=True)
 
     if search_button:
         # Validation
@@ -313,7 +577,7 @@ def run_video_finder():
                 # Export button
                 excel_bytes = export_to_excel(display_df)
                 st.download_button(
-                    label="ð¥ Download as Excel (.xlsx)",
+                    label="\U0001f4e5 Download as Excel (.xlsx)",
                     data=excel_bytes,
                     file_name="video_finder_results.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
