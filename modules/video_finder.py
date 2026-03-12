@@ -146,27 +146,35 @@ def search_google_for_videos(query, site_domain, session):
         for link in soup.find_all('a', href=True):
             href = link['href']
 
-            if site_domain in href:
-                if '/url?q=' in href:
-                    clean_url = unquote(href.split('/url?q=')[1].split('&')[0])
-                else:
-                    clean_url = href
+            # Extract the actual destination URL from Google's redirect
+            if '/url?q=' in href:
+                clean_url = unquote(href.split('/url?q=')[1].split('&')[0])
+            elif href.startswith('http'):
+                clean_url = href
+            else:
+                # Skip relative URLs (Google's own internal links)
+                continue
 
-                if 'google.com' in clean_url:
-                    continue
+            # Only keep URLs where the domain actually matches the target site
+            parsed = urlparse(clean_url)
+            if site_domain not in parsed.netloc:
+                continue
 
-                title = link.get_text() or 'Unknown'
+            if 'google.com' in clean_url:
+                continue
 
-                results.append({
-                    'Link': clean_url,
-                    'Source Platform': '',
-                    'Date Published': 'Unknown',
-                    'Video Title': title,
-                    'Description': '',
-                    'Uploader/Channel Name': '',
-                    'Channel URL': '',
-                    'Tagged Handles Found': query if query.startswith('@') else ''
-                })
+            title = link.get_text() or 'Unknown'
+
+            results.append({
+                'Link': clean_url,
+                'Source Platform': '',
+                'Date Published': 'Unknown',
+                'Video Title': title,
+                'Description': '',
+                'Uploader/Channel Name': '',
+                'Channel URL': '',
+                'Tagged Handles Found': query if query.startswith('@') else ''
+            })
 
         time.sleep(2)  # Rate limiting
         return results
@@ -321,27 +329,35 @@ def search_social_tagged_content(target_name, handles, progress_bar, progress_of
             for link in soup.find_all('a', href=True):
                 href = link['href']
 
-                if site_domain in href:
-                    if '/url?q=' in href:
-                        clean_url = unquote(href.split('/url?q=')[1].split('&')[0])
-                    else:
-                        clean_url = href
+                # Extract the actual destination URL from Google's redirect
+                if '/url?q=' in href:
+                    clean_url = unquote(href.split('/url?q=')[1].split('&')[0])
+                elif href.startswith('http'):
+                    clean_url = href
+                else:
+                    # Skip relative URLs (Google's own internal links)
+                    continue
 
-                    if 'google.com' in clean_url:
-                        continue
+                # Only keep URLs where the domain actually matches the target site
+                parsed = urlparse(clean_url)
+                if site_domain not in parsed.netloc:
+                    continue
 
-                    title = link.get_text() or 'Unknown'
+                if 'google.com' in clean_url:
+                    continue
 
-                    results.append({
-                        'Link': clean_url,
-                        'Source Platform': platform,
-                        'Date Published': 'Unknown',
-                        'Video Title': title,
-                        'Description': '',
-                        'Uploader/Channel Name': '',
-                        'Channel URL': '',
-                        'Tagged Handles Found': query if query.startswith('@') else ''
-                    })
+                title = link.get_text() or 'Unknown'
+
+                results.append({
+                    'Link': clean_url,
+                    'Source Platform': platform,
+                    'Date Published': 'Unknown',
+                    'Video Title': title,
+                    'Description': '',
+                    'Uploader/Channel Name': '',
+                    'Channel URL': '',
+                    'Tagged Handles Found': query if query.startswith('@') else ''
+                })
 
             time.sleep(2)  # Rate limiting
 
